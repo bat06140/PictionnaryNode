@@ -25,3 +25,15 @@ exports.login=function (req,res,data, callback) {
 
     });
 };
+
+exports.profil=function (req,res, callback) {
+    connection.query('SELECT * from users where id='+req.session.userid, function (err, rows) {
+        if (!err)
+        {
+            return callback(rows);
+        }
+        else
+            logger.error(err);
+
+    });
+};

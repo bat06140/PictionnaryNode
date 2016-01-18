@@ -41,9 +41,9 @@ app.get('/login', function(req, res){
 });
 
 app.post('/login', function(req, res) {
-   /* if(req.session.authid){
-        res.redirect('/home/welcome');
-    }else {*/
+    if(req.session.userid){
+        res.render('main');
+    }else {
         var bodyEmail = req.body.email;
         var bodyPassword = req.body.password;
         var errors = [];
@@ -71,53 +71,17 @@ app.post('/login', function(req, res) {
                 }
                 else {
                     req.session.userid=rows[0].id;
-                    res.render('main');
+                    res.redirect('/main');
                 }
-                logger.debug(rows[0]);
             });
         }
-  //  }
+    }
 });
 
-app.get('/register', function (req, res) {
-    // TODO ajouter un nouveau utilisateur
-
-    var bodyEmail = req.body.email;
-    var bodyPassword = req.body.password;
-    var errors = [];
-
-    if (!validator.isEmail(bodyEmail)) {
-        errors[errors.length] = 'Email invalide ';
-    }
-    if (!validator.isAlphanumeric(bodyPassword)) {
-        errors[errors.length] = 'Password invalide ';
-    }
-
-    if (errors.length != 0) {
-        res.render('login', {errors: errors});
-    }
-    else{
-
-
-        var data = {email: bodyEmail, password: bodyPassword};
-
-        //db
-        DB.login(req, res, data, function (rows) {
-            if (rows.length == 0) {
-                errors.push('Email ou mot de passe incorrect ');
-                res.render('login', {errors: errors});
-            }
-            else {
-                res.render('main', {user: rows[0]});
-            }
-            logger.debug(rows[0]);
-        });
-    }
-
-});
-/* On affiche le profile  */
-app.get('/profile', function (req, res) {
-    // TODO
-    // On redirige vers la login si l'utilisateur n'a pas été authentifier
-    // Afficher le button logout
+app.get('/main', function(req, res){
+    DB.profil(req,res,function(rows)
+    {
+       user={prenom: rows[0].prenom};
+       res.render('main',user);
+    });
 });
