@@ -1,0 +1,22 @@
+<% title="Login"%>
+<% include head %>
+
+<h2>Connectez-vous</h2>
+<form class="connexion form-horizontal" action="/login" method="post" name="connexion">
+    <% if(errors.length != 0){ %>
+    <div class="alert alert-danger"><%= errors %></div>
+    <% }%>
+    <div class="form-group">
+        <label for="email">E-mail :</label>
+        <input class="form-control" type="email" name="email" id="email" autofocus/>
+    </div>
+    <div class="form-group">
+        <label for="password">Mot de passe :</label>
+        <input class="form-control" type="password" name="password" id="password"/>
+    </div>
+    <input type="submit" class="btn btn-default" value="Connexion">
+
+</form>
+
+
+<% include foot %>
