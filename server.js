@@ -168,21 +168,20 @@ app.post('/register', function(req, res) {
 app.get('/main', function(req, res){
 
     data={usr: req.session.userid};
-    DB.profil(req,res,data,function(rows)
+    DB.profil(req,res,data,function(result)
     {
         picture = "";
-        for(i = 0; i < rows[0].profilepic.length; i++)
-            picture += String.fromCharCode( rows[0].profilepic[i] );
+        for(i = 0; i < result[0].profilepic.length; i++)
+            picture += String.fromCharCode( result[0].profilepic[i] );
 
        user={
-           prenom: rows[0].prenom,
+           prenom: result[0].prenom,
            profilepic: picture
        };
 
         DB.selectDrawings(req,res,function(rows)
         {
-            drawings={drawings: rows};
-            res.render('main',{user: user, usr: req.session.userid, drawings: drawings});
+            res.render('main',{user: user, usr: req.session.userid, drawings: rows});
 
         });
     });
