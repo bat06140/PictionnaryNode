@@ -6,6 +6,9 @@ var DB = require('./DBconnect');
 var bodyParser = require('body-parser');
 var validator = require('validator');
 var session = require('express-session');
+var sha256 =require('sha256');
+var dateFormat = require('dateformat');
+
 
 var app = express();
 
@@ -29,23 +32,28 @@ app.set('views', __dirname + '/views');
 /* On affiche le formulaire d'enregistrement */
 
 app.get('/', function(req, res){
-    if(req.session.authid){
+    if(req.session.userid){
         res.redirect('/main');
     }else{
-        res.render('login', {errors: []});
+        res.render('login', {usr: req.session.userid, errors: []});
     }
 });
 
 app.get('/login', function(req, res){
-    res.render('login', {errors: []});
+    if(req.session.userid){
+        res.redirect('/main');
+    }
+    else {
+        res.render('login', {usr: req.session.userid, errors: []});
+    }
 });
 
 app.post('/login', function(req, res) {
     if(req.session.userid){
-        res.render('main');
+        res.redirect('/main');
     }else {
         var bodyEmail = req.body.email;
-        var bodyPassword = req.body.password;
+        var bodyPassword = sha256(String(req.body.password));
         var errors = [];
 
         if (!validator.isEmail(bodyEmail)) {
@@ -56,7 +64,7 @@ app.post('/login', function(req, res) {
         }
 
         if (errors.length != 0) {
-            res.render('login', {errors: errors});
+            res.render('login', {usr: req.session.userid, errors: errors});
         }
         else {
 
@@ -67,7 +75,7 @@ app.post('/login', function(req, res) {
             DB.login(req, res, data, function (rows) {
                 if (rows.length == 0) {
                     errors.push('Email ou mot de passe incorrect !');
-                    res.render('login', {errors: errors});
+                    res.render('login', {usr: req.session.userid, errors: errors});
                 }
                 else {
                     req.session.userid=rows[0].id;
@@ -82,15 +90,32 @@ app.post('/login', function(req, res) {
 
 
 app.get('/register', function(req, res){
-    res.render('register', {errors: []});
+    if(req.session.userid){
+        res.redirect('main');
+    }
+    else
+    {
+        res.render('register', {usr: req.session.userid, errors: []});
+    }
 });
 
-app.post('/login', function(req, res) {
+app.post('/register', function(req, res) {
     if(req.session.userid){
-        res.render('main');
+        res.redirect('main');
     }else {
         var bodyEmail = req.body.email;
-        var bodyPassword = req.body.password;
+        var bodyPassword = sha256(String(req.body.password));
+        var bodyPrenom = req.body.prenom;
+        var bodyNom = req.body.nom;
+        var bodyTel = req.body.telephone;
+        var bodyWebsite = req.body.web;
+        var bodySexe = req.body.sexe;
+        var bodyBirthdate = dateFormat(req.body.datenaissance, "isoDateTime");
+        var bodyVille = req.body.ville;
+        var bodyTaille = req.body.taille;
+        var bodyCouleur = req.body.couleur.substr(1);
+        var bodyProfilepic = req.body.profilepic;
+
         var errors = [];
 
         if (!validator.isEmail(bodyEmail)) {
@@ -105,18 +130,31 @@ app.post('/login', function(req, res) {
         }
         else {
 
+            var data = {
+                email: bodyEmail,
+                password: bodyPassword,
+                prenom: bodyPrenom,
+                nom: bodyNom,
+                tel: bodyTel,
+                website: bodyWebsite,
+                sexe: bodySexe,
+                birthdate: bodyBirthdate,
+                ville: bodyVille,
+                taille: bodyTaille,
+                couleur: bodyCouleur,
+                profilepic: bodyProfilepic
+            };
 
-            var data = {email: bodyEmail, password: bodyPassword};
-
-            //db
-            DB.login(req, res, data, function (rows) {
-                if (rows.length == 0) {
-                    errors.push('Email ou mot de passe incorrect !');
-                    res.render('login', {errors: errors});
+            DB.email(req,res,data,function(rows)
+            {
+                if (rows.length != 0) {
+                    errors.push('Email déjà existant !');
+                    res.render('register', {errors: errors, usr: req.session.userid});
                 }
                 else {
-                    req.session.userid=rows[0].id;
-                    res.redirect('/main');
+                        DB.register(req, res, data, function (rows) {
+                        res.redirect('/login');
+                    });
                 }
             });
         }
@@ -128,9 +166,55 @@ app.post('/login', function(req, res) {
 
 
 app.get('/main', function(req, res){
-    DB.profil(req,res,function(rows)
+
+    data={usr: req.session.userid};
+    DB.profil(req,res,data,function(rows)
     {
-       user={prenom: rows[0].prenom};
-       res.render('main',user);
+        picture = "";
+        for(i = 0; i < rows[0].profilepic.length; i++)
+            picture += String.fromCharCode( rows[0].profilepic[i] );
+
+       user={
+           prenom: rows[0].prenom,
+           profilepic: picture
+       };
+
+        DB.selectDrawings(req,res,function(rows)
+        {
+            drawings={drawings: rows};
+            res.render('main',{user: user, usr: req.session.userid, drawings: drawings});
+
+        });
     });
+
+
+});
+
+
+app.get('/logout', function(req, res){
+    req.session.destroy();
+    res.redirect('/login');
+});
+
+app.get('/paint', function(req, res){
+    res.render('paint',{usr: req.session.userid});
+});
+
+app.post('/paint', function(req,res){
+    errors = [];
+    if(!validator.isAlphanumeric(req.body.picturename))
+        errors.push("Nom incorrect");
+
+    if(errors.length != 0)
+        res.render('paint', {user: req.session.userid, errors: errors});
+    else {
+        data = {
+            id_user: req.session.userid,
+            commands: req.body.drawingCommands,
+            paint: req.body.picture,
+            name: req.body.picturename
+        };
+        DB.insertDrawing(req,res,data);
+    }
+    res.redirect('main');
 });

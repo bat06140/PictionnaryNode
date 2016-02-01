@@ -1,9 +1,55 @@
+<%= title="Profil" %>
 <% include head %>
 <div class="jumbotron" style="padding-bottom: 70px;">
     <h2 style="text-align: center">Bonjour <%= user.prenom %> </h2>
-    <img src="">
+    <div class="row text-center">
+        <img src="<%= user.profilepic %>" width="96" height="96" />
+    </div>
     <div class="col-xs-12 text-center">
-        <a class="btn btn-lg btn-success" href="./paint.php" role="button">Dessiner</a>
+        <a class="btn btn-lg btn-success" href="./paint" role="button">Dessiner</a>
 
+    </div>
+</div>
+
+<div class="col-xs-12 content">
+    <div class="row">
+        <div class="col-xs-8">
+            <h1>Mes dessins</h1>
+        </div>
+
+    </div>
+    <div class="table-responsive">
+        <table class="table text-center">
+            <thead>
+            <tr>
+                <td>Nom du dessin</td>
+                <td>Voir</td>
+                <td>Supprimer</td>
+            </tr>
+            </thead>
+            <tbody>
+            <% if (drawings)
+               {
+                   for(i=0;i<drawings.length;i++)
+                   {
+            %>
+            <tr>
+                <td><% drawings[i].name %></td>
+
+            </tr>
+            <%
+                    }
+                }
+                else
+                {
+            %>
+            <tr>
+                <td colspan="3">Pas de dessin.</td>
+            </tr>
+            <%
+                }
+            %>
+            </tbody>
+        </table>
     </div>
 </div>

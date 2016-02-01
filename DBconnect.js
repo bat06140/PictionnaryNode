@@ -26,8 +26,68 @@ exports.login=function (req,res,data, callback) {
     });
 };
 
-exports.profil=function (req,res, callback) {
-    connection.query('SELECT * from users where id='+req.session.userid, function (err, rows) {
+exports.profil=function (req,res,data, callback) {
+    connection.query('SELECT * from users where id=?',[data.usr], function (err, rows) {
+        if (!err)
+        {
+            callback(rows);
+        }
+        else
+            logger.error(err);
+
+    });
+};
+
+exports.email=function (req,res, data, callback) {
+    connection.query('SELECT * from users where email=?',[data.email], function (err, rows) {
+        if (!err)
+        {
+            return callback(rows);
+        }
+        else
+            logger.error(err);
+
+    });
+};
+
+exports.register=function (req,res,data, callback) {
+    logger.info(data);
+    connection.query('INSERT INTO users (email, password, nom, prenom, tel, website, sexe, birthdate, ville, taille, couleur, profilepic) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [data.email,
+        data.password,
+        data.nom,
+        data.prenom,
+        data.tel,
+        data.website,
+        data.sexe,
+        data.birthdate,
+        data.ville,
+        data.taille,
+        data.couleur,
+        data.profilepic],
+        function (err, rows, fields) {
+            if (!err)
+            {
+                callback(rows);
+            }
+            else
+                logger.error(err);
+
+        });
+};
+
+exports.insertDrawing = function(req, res, data){
+
+        connection.query("INSERT INTO drawings SET ?",data, function(err){
+            if (err)
+            {
+                logger.error(err);
+            }
+        });
+};
+
+exports.selectDrawings = function(req, res, callback){
+    connection.query("SELECT id, name FROM drawings WHERE id_user = ?", [req.session.userid], function (err, rows) {
         if (!err)
         {
             return callback(rows);
